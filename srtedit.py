@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import re
 from datetime import datetime, timedelta
+import os
 
 
 def create_gui():
@@ -62,7 +63,8 @@ def create_gui():
                 # Convert shift amount to integer (milliseconds)
                 shift_value = int(shift_value)
                 for file_path, content in file_contents.items():
-                    updated_content = update_timestamps(content, shift_value)
+                    updated_content = update_timestamps(
+                        content, file_path, shift_value)
                     print(f"\n--- Updated Content of {file_path} ---")
                     print(updated_content)
             except ValueError:
@@ -71,7 +73,7 @@ def create_gui():
         else:
             messagebox.showwarning("No Input", "Please enter a shift amount.")
 
-    def update_timestamps(content, shift_value):
+    def update_timestamps(content, file_path, shift_value):
         # Define the timestamp pattern (ISO 8601 format)
         pattern = r'(\d{2}:\d{2}:\d{2},\d{3})'
 
@@ -92,6 +94,20 @@ def create_gui():
 
         # Replace all timestamps in the content
         updated_content = re.sub(pattern, shift_time, content)
+
+        # Determine the path for the updated file
+        base, ext = os.path.splitext(file_path)
+        new_file_path = f"{base}.shift{ext}"
+
+        # Write the updated content to the new file
+        try:
+            with open(new_file_path, 'w', encoding='utf-8') as file:
+                file.write(updated_content)
+            print(f"Updated file saved as: {new_file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error writing file {
+                                 new_file_path}: {str(e)}")
+
         return updated_content
 
     # Initial button to select files
