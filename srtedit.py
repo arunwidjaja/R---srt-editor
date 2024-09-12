@@ -1,43 +1,69 @@
 import tkinter as tk
-
-from tkinter import filedialog
-from tkinter import messagebox
-
-# Create the main application window
+from tkinter import filedialog, messagebox
 
 
 def create_gui():
-    # Initialize the Tkinter root object
     root = tk.Tk()
-    root.title("SRT Shift Tool")
-    root.geometry("300x150")  # Set the window size
+    root.title("SRT File Loader")
+    root.geometry("400x200")  # Adjust size as needed
 
-    # Function to handle the file selection
+    # Variables to store file paths and shift amount
+    file_paths = []
+    shift_amount = tk.StringVar()
+
     def select_files():
+        nonlocal file_paths
         file_paths = filedialog.askopenfilenames(
-            title="Select SRT Files",
+            title="Select .srt Files",
             filetypes=[("Subtitle Files", "*.srt"), ("All Files", "*.*")]
         )
+
         if file_paths:
-            # Display a message showing the selected files
-            messagebox.showinfo("Selected Files", "\n".join(file_paths))
+            # Clear previous widgets if any
+            for widget in root.winfo_children():
+                widget.destroy()
+
+            # Display shift amount entry
+            shift_amount_label = tk.Label(
+                root, text="Shift amount (ms):", font=("Arial", 12))
+            shift_amount_label.pack(pady=10)
+
+            shift_amount_entry = tk.Entry(
+                root, textvariable=shift_amount, width=20)
+            shift_amount_entry.pack(pady=5)
+
+            # Add a button to submit the shift amount
+            submit_button = tk.Button(
+                root, text="Submit Shift Amount", command=submit_shift_amount, width=20)
+            submit_button.pack(pady=10)
+
         else:
-            messagebox.showwarning(
-                "No File Selected", "Please select at least one file.")
+            messagebox.showwarning("No Files Selected",
+                                   "Please select at least one .srt file.")
 
-    # Add a label to guide the user
-    label = tk.Label(
-        root, text="Select SRT files to shift time codes", font=("Arial", 12))
-    label.pack(pady=20)
+    def submit_shift_amount():
+        # Store the shift amount entered by the user
+        shift_value = shift_amount.get()
+        if shift_value:
+            try:
+                shift_value = int(shift_value)
+                # Print or use the shift amount as needed
+                print(f"Shift amount (ms): {shift_value}")
+                # Print or use the file paths as needed
+                print(f"Selected files: {file_paths}")
+            except ValueError:
+                messagebox.showerror(
+                    "Invalid Input", "Please enter a valid integer for the shift amount.")
+        else:
+            messagebox.showwarning("No Input", "Please enter a shift amount.")
 
-    # Add the button to prompt file selection
-    button = tk.Button(root, text="Select Files", command(select_files), width=20)
-    button.pack(pady=10)
+    # Initial button to select files
+    select_button = tk.Button(
+        root, text="Select .srt files", command=select_files, width=20)
+    select_button.pack(pady=20)
 
-    # Run the application
     root.mainloop()
 
 
-# Launch the GUI
 if __name__ == "__main__":
     create_gui()
