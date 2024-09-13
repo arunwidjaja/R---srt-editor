@@ -102,8 +102,12 @@ def create_gui():
             except ValueError as e:
                 print(f"Error processing time '{iso_time}': {e}")
                 return iso_time
-
+        # replaces every timestamp in a single file with the shifted timestamp
         for file_path, content in file_contents.items():
+            # when a timestamp is found matching the pattern,
+            # it is passed to shift_time, which returns the shifted timestamp
+            # the timestamp is replaced with the shifted timestamp
+            # repeat until end of string (content) reached
             updated_content = re.sub(SRT_TIMESTAMP_FORMAT, shift_time, content)
             print(f"\n--- Updated content of {file_path} ---")
 
