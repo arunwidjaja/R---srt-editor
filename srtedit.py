@@ -6,22 +6,44 @@ import os
 
 
 def create_gui():
+
+    # Initialize GUI elements
+    # Window
     root = tk.Tk()
     root.title("SRT File Loader")
     root.geometry("400x300")  # Adjust size as needed
 
     # Initialize variables to store file paths, file contents, and shift amount
-    file_paths = []
-    file_contents = {}
+    file_contents = {}  # dictionary containing file path and contents of file
+    shift_value = 0
     shift_amount = tk.StringVar()
 
-    def select_files():
-        nonlocal file_paths, file_contents
+    # Button for file Selection
+    def display_get_files():
+        select_button = tk.Button(
+            root, text="Select .srt files", command=get_files, width=20)
+        select_button.pack(pady=20)
+
+    # Field for submitting shift amount
+    def display_get_shift_amount():
+        submit_button = tk.Button(
+            root, text="Submit Shift Amount", command=get_shift_amount, width=20)
+        shift_amount_entry = tk.Entry(
+            root, textvariable=shift_amount, width=20)
+        shift_amount_label = tk.Label(
+            root, text="Shift amount (ms):", font=("Arial", 12))
+        shift_amount_label.pack(pady=10)
+        shift_amount_entry.pack(pady=5)
+        submit_button.pack(pady=10)
+
+    # Reads files selected by user
+    # Displays shift amount text field afterwards
+    def get_files():
+        nonlocal file_contents
         file_paths = filedialog.askopenfilenames(
             title="Select .srt Files",
             filetypes=[("Subtitle Files", "*.srt"), ("All Files", "*.*")]
         )
-
         if file_paths:
             # Clear previous widgets if any
             for widget in root.winfo_children():
@@ -37,46 +59,34 @@ def create_gui():
                 except Exception as e:
                     messagebox.showerror("Error", f"Error reading file {
                                          file_path}: {str(e)}")
-
-            # Display shift amount entry
-            shift_amount_label = tk.Label(
-                root, text="Shift amount (ms):", font=("Arial", 12))
-            shift_amount_label.pack(pady=10)
-
-            shift_amount_entry = tk.Entry(
-                root, textvariable=shift_amount, width=20)
-            shift_amount_entry.pack(pady=5)
-
-            # Add a button to submit the shift amount
-            submit_button = tk.Button(
-                root, text="Submit Shift Amount", command=submit_shift_amount, width=20)
-            submit_button.pack(pady=10)
-
+            # Display shift amount GUI
+            display_get_shift_amount()
         else:
             messagebox.showwarning("No Files Selected",
                                    "Please select at least one .srt file.")
 
-    def submit_shift_amount():
+    # Reads shift amount entered by user
+    # Updates timestamps upon completion
+    def get_shift_amount():
+        nonlocal shift_value
         shift_value = shift_amount.get()
         if shift_value:
             try:
-                # Convert shift amount to integer (milliseconds)
+                # Convert shift amount to integer (milliseconds) and update timestamps
                 shift_value = int(shift_value)
-                for file_path, content in file_contents.items():
-                    updated_content = update_timestamps(
-                        content, file_path, shift_value)
-                    print(f"\n--- Updated Content of {file_path} ---")
-                    print(updated_content)
+                update_timestamps(file_contents, shift_value)
             except ValueError:
                 messagebox.showerror(
                     "Invalid Input", "Please enter a valid integer for the shift amount.")
         else:
             messagebox.showwarning("No Input", "Please enter a shift amount.")
 
-    def update_timestamps(content, file_path, shift_value):
+    # Updates timestamps and writes new file to the same directory as the source file
+    def update_timestamps(file_contents, shift_value):
         # Define the timestamp pattern (ISO 8601 format)
         pattern = r'(\d{2}:\d{2}:\d{2},\d{3})'
 
+        # parses a timestamp and shifts it
         def shift_time(match):
             iso_time = match.group(0)
             try:
@@ -92,28 +102,26 @@ def create_gui():
                 print(f"Error processing time '{iso_time}': {e}")
                 return iso_time
 
-        # Replace all timestamps in the content
-        updated_content = re.sub(pattern, shift_time, content)
+        for file_path, content in file_contents.items():
+            updated_content = re.sub(pattern, shift_time, content)
+            print(f"\n--- Updated content of {file_path} ---")
 
-        # Determine the path for the updated file
-        base, ext = os.path.splitext(file_path)
-        new_file_path = f"{base}.shift{ext}"
+            # Writing files
+            base, ext = os.path.splitext(file_path)
+            new_file_path = f"{base}.shift{ext}"
+            write_updated_srt(new_file_path, updated_content)
 
-        # Write the updated content to the new file
+    # Writes to disk
+    def write_updated_srt(file_path, content):
         try:
-            with open(new_file_path, 'w', encoding='utf-8') as file:
-                file.write(updated_content)
-            print(f"Updated file saved as: {new_file_path}")
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(content)
+            print(f"Updated file saved as: {file_path}")
         except Exception as e:
             messagebox.showerror("Error", f"Error writing file {
-                                 new_file_path}: {str(e)}")
+                file_path}: {str(e)}")
 
-        return updated_content
-
-    # Initial button to select files
-    select_button = tk.Button(
-        root, text="Select .srt files", command=select_files, width=20)
-    select_button.pack(pady=20)
+    display_get_files()
 
     root.mainloop()
 
