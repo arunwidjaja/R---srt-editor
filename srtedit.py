@@ -4,6 +4,8 @@ import re
 from datetime import datetime, timedelta
 import os
 
+SRT_TIMESTAMP_FORMAT = r'(\d{2}:\d{2}:\d{2},\d{3})'
+
 
 def create_gui():
 
@@ -84,7 +86,6 @@ def create_gui():
     # Updates timestamps and writes new file to the same directory as the source file
     def update_timestamps(file_contents, shift_value):
         # Define the timestamp pattern (ISO 8601 format)
-        pattern = r'(\d{2}:\d{2}:\d{2},\d{3})'
 
         # parses a timestamp and shifts it
         def shift_time(match):
@@ -103,7 +104,7 @@ def create_gui():
                 return iso_time
 
         for file_path, content in file_contents.items():
-            updated_content = re.sub(pattern, shift_time, content)
+            updated_content = re.sub(SRT_TIMESTAMP_FORMAT, shift_time, content)
             print(f"\n--- Updated content of {file_path} ---")
 
             # Writing files
